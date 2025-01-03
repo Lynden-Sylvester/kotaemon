@@ -2,6 +2,7 @@ import pickle
 from datetime import datetime
 from pathlib import Path
 
+import gettext
 import gradio as gr
 from theflow.storage import storage
 
@@ -12,7 +13,9 @@ from kotaemon.contribs.promptui.ui.blocks import ChatBlock
 
 from ..logs import ResultLog
 
-USAGE_INSTRUCTION = """## How to use:
+_ = gettext.gettext
+
+USAGE_INSTRUCTION = _("""## How to use:
 
 1. Set the desired parameters.
 2. Click "New chat" to start a chat session with the supplied parameters. This
@@ -40,7 +43,7 @@ In case of errors, you can:
 ## Contribute:
 
 - Follow installation at: https://github.com/Cinnamon/kotaemon/
-"""
+""")
 
 
 def construct_chat_ui(
@@ -90,18 +93,18 @@ def construct_chat_ui(
         outputs.append(component)
 
     sess = gr.State(value=None)
-    chatbot = gr.Chatbot(label="Chatbot", show_copy_button=True)
+    chatbot = gr.Chatbot(label=_("Chatbot"), show_copy_button=True)
     chat = ChatBlock(
         func_chat, chatbot=chatbot, additional_inputs=[sess], additional_outputs=outputs
     )
     param_state = gr.Textbox(interactive=False)
 
-    with gr.Blocks(analytics_enabled=False, title="Welcome to PromptUI") as demo:
+    with gr.Blocks(analytics_enabled=False, title=_("Welcome to PromptUI")) as demo:
         sess.render()
-        with gr.Accordion(label="HOW TO", open=False):
+        with gr.Accordion(label=_("HOW TO"), open=False):
             gr.Markdown(USAGE_INSTRUCTION)
         with gr.Row():
-            run_btn = gr.Button("New chat")
+            run_btn = gr.Button(_("New chat"))
             run_btn.click(
                 func_new_chat,
                 inputs=params,
@@ -114,36 +117,36 @@ def construct_chat_ui(
                     *outputs,
                 ],
             )
-            with gr.Accordion(label="End chat", open=False):
-                likes = gr.Radio(["like", "dislike", "neutral"], value="neutral")
+            with gr.Accordion(label=_("End chat"), open=False):
+                likes = gr.Radio([_("like"), _("dislike"), _("neutral")], value=_("neutral"))
                 save_log = gr.Checkbox(
                     value=True,
-                    label="Save log",
-                    info="If saved, log can be exported later",
+                    label=_("Save log"),
+                    info=_("If saved, log can be exported later"),
                     show_label=True,
                 )
-                end_btn = gr.Button("End chat")
+                end_btn = gr.Button(_("End chat"))
                 end_btn.click(
                     func_end_chat,
                     inputs=[likes, save_log, sess],
                     outputs=[param_state, sess],
                 )
-            with gr.Accordion(label="Export", open=False):
+            with gr.Accordion(label=_("Export"), open=False):
                 exported_file = gr.File(
-                    label="Output file", show_label=True, height=100
+                    label=_("Output file"), show_label=True, height=100
                 )
-                export_btn = gr.Button("Export")
+                export_btn = gr.Button(_("Export"))
                 export_btn.click(func_export_to_excel, inputs=[], outputs=exported_file)
 
         with gr.Row():
             with gr.Column():
-                with gr.Tab("Params"):
+                with gr.Tab(_("Params")):
                     for component in params:
                         component.render()
-                    with gr.Accordion(label="Session state", open=False):
+                    with gr.Accordion(label=_("Session state"), open=False):
                         param_state.render()
 
-                with gr.Tab("Outputs"):
+                with gr.Tab(_("Outputs")):
                     for component in outputs:
                         component.render()
             with gr.Column():
@@ -222,9 +225,9 @@ def build_chat_ui(config, pipeline_def):
             the response from the chatbot
         """
         if session is None:
-            raise gr.Error(
+            raise gr.Error(_(
                 "No active chat session. Please set the params and click New chat"
-            )
+            ))
 
         pred = session(message)
         text_response = pred.content
@@ -250,7 +253,7 @@ def build_chat_ui(config, pipeline_def):
         Returns:
             the new empty state
         """
-        gr.Info("Ending session...")
+        gr.Info(_("Ending session..."))
         session.end_session()
         output_dir: Path = (
             Path(storage.url(session.config.store_result)) / session.last_run.id()
@@ -264,7 +267,7 @@ def build_chat_ui(config, pipeline_def):
 
             session = None
             param_state = ""
-            gr.Info("End session without saving log.")
+            gr.Info(_("End session without saving log."))
             return param_state, session
 
         # add preference result to progress
@@ -281,7 +284,7 @@ def build_chat_ui(config, pipeline_def):
 
         session = None
         param_state = ""
-        gr.Info("End session and save log.")
+        gr.Info(_("End session and save log."))
         return param_state, session
 
     def export_func():
@@ -289,12 +292,12 @@ def build_chat_ui(config, pipeline_def):
             f"{pipeline_def.__module__}.{pipeline_def.__name__}_{datetime.now()}.xlsx"
         )
         path = str(exported_dir / name)
-        gr.Info(f"Begin exporting {name}...")
+        gr.Info(_("Begin exporting {}...").format(name))
         try:
             export(config=config, pipeline_def=pipeline_def, output_path=path)
         except Exception as e:
-            raise gr.Error(f"Failed to export. Please contact project's AIR: {e}")
-        gr.Info(f"Exported {name}. Please go to the `Exported file` tab to download")
+            raise gr.Error(_("Failed to export. Please contact project's AIR: {}").format(e))
+        gr.Info(_("Exported {}. Please go to the `Exported file` tab to download").format(name))
         return path
 
     demo = construct_chat_ui(

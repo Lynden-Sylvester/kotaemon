@@ -1,10 +1,12 @@
 from typing import Optional
 
+import gettext
 import gradio as gr
 from ktem.app import BasePage
 from ktem.db.models import IssueReport, engine
 from sqlmodel import Session
 
+_ = gettext.gettext
 
 class ReportIssue(BasePage):
     def __init__(self, app):
@@ -12,34 +14,34 @@ class ReportIssue(BasePage):
         self.on_building_ui()
 
     def on_building_ui(self):
-        with gr.Accordion(label="Feedback", open=False):
+        with gr.Accordion(label=_("Feedback"), open=False):
             self.correctness = gr.Radio(
                 choices=[
-                    ("The answer is correct", "correct"),
-                    ("The answer is incorrect", "incorrect"),
+                    (_("The answer is correct"), _("correct")),
+                    (_("The answer is incorrect"), _("incorrect")),
                 ],
-                label="Correctness:",
+                label=_("Correctness:"),
             )
             self.issues = gr.CheckboxGroup(
                 choices=[
-                    ("The answer is offensive", "offensive"),
-                    ("The evidence is incorrect", "wrong-evidence"),
+                    (_("The answer is offensive"), _("offensive")),
+                    (_("The evidence is incorrect"), _("wrong-evidence")),
                 ],
-                label="Other issue:",
+                label=_("Other issue:"),
             )
             self.more_detail = gr.Textbox(
-                placeholder=(
+                placeholder=_(
                     "More detail (e.g. how wrong is it, what is the "
                     "correct answer, etc...)"
                 ),
                 container=False,
                 lines=3,
             )
-            gr.Markdown(
+            gr.Markdown(_(
                 "This will send the current chat and the user settings to "
                 "help with investigation"
-            )
-            self.report_btn = gr.Button("Report")
+            ))
+            self.report_btn = gr.Button(_("Report"))
 
     def report(
         self,
@@ -83,4 +85,4 @@ class ReportIssue(BasePage):
             )
             session.add(issue)
             session.commit()
-        gr.Info("Thank you for your feedback")
+        gr.Info(_("Thank you for your feedback"))

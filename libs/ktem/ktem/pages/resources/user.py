@@ -1,5 +1,6 @@
 import hashlib
 
+import gettext
 import gradio as gr
 import pandas as pd
 from ktem.app import BasePage
@@ -7,16 +8,18 @@ from ktem.db.models import User, engine
 from sqlmodel import Session, select
 from theflow.settings import settings as flowsettings
 
-USERNAME_RULE = """**Username rule:**
+_ = gettext.gettext
+
+USERNAME_RULE = _("""**Username rule:**
 
 - Username is case-insensitive
 - Username must be at least 3 characters long
 - Username must be at most 32 characters long
 - Username must contain only alphanumeric characters and underscores
-"""
+""")
 
 
-PASSWORD_RULE = """**Password rule:**
+PASSWORD_RULE = _("""**Password rule:**
 
 - Password must be at least 8 characters long
 - Password must contain at least one uppercase letter
@@ -24,7 +27,7 @@ PASSWORD_RULE = """**Password rule:**
 - Password must contain at least one digit
 - Password must contain at least one special character from the following:
     ^ $ * . [ ] { } ( ) ? - " ! @ # % & / \\ , > < ' : ; | _ ~  + =
-"""
+""")
 
 
 def validate_username(usn):
@@ -67,26 +70,26 @@ def validate_password(pwd, pwd_cnf):
     """
     errors = []
     if pwd != pwd_cnf:
-        errors.append("Password does not match")
+        errors.append(_("Password does not match"))
 
     if len(pwd) < 8:
-        errors.append("Password must be at least 8 characters long")
+        errors.append(_("Password must be at least 8 characters long"))
 
     if not any(c.isupper() for c in pwd):
-        errors.append("Password must contain at least one uppercase letter")
+        errors.append(_("Password must contain at least one uppercase letter"))
 
     if not any(c.islower() for c in pwd):
-        errors.append("Password must contain at least one lowercase letter")
+        errors.append(_("Password must contain at least one lowercase letter"))
 
     if not any(c.isdigit() for c in pwd):
-        errors.append("Password must contain at least one digit")
+        errors.append(_("Password must contain at least one digit"))
 
     special_chars = "^$*.[]{}()?-\"!@#%&/\\,><':;|_~+="
     if not any(c in special_chars for c in pwd):
-        errors.append(
+        errors.append(_(
             "Password must contain at least one special character from the "
-            f"following: {special_chars}"
-        )
+            "following: {}"
+        ).format(special_chars))
 
     if errors:
         return "; ".join(errors)
@@ -99,7 +102,7 @@ def create_user(usn, pwd) -> bool:
         statement = select(User).where(User.username_lower == usn.lower())
         result = session.exec(statement).all()
         if result:
-            print(f'User "{usn}" already exists')
+            print(_('User "{}" already exists').format(usn))
             return False
 
         else:
@@ -129,10 +132,10 @@ class UserManagement(BasePage):
 
             is_created = create_user(usn, pwd)
             if is_created:
-                gr.Info(f'User "{usn}" created successfully')
+                gr.Info(_('User "{}" created successfully').format(usn))
 
     def on_building_ui(self):
-        with gr.Tab(label="User list"):
+        with gr.Tab(label=_("User list")):
             self.state_user_list = gr.State(value=None)
             self.user_list = gr.DataFrame(
                 headers=["id", "name", "admin"],
@@ -141,40 +144,40 @@ class UserManagement(BasePage):
 
             with gr.Group(visible=False) as self._selected_panel:
                 self.selected_user_id = gr.Number(value=-1, visible=False)
-                self.usn_edit = gr.Textbox(label="Username")
+                self.usn_edit = gr.Textbox(label=_("Username"))
                 with gr.Row():
-                    self.pwd_edit = gr.Textbox(label="Change password", type="password")
+                    self.pwd_edit = gr.Textbox(label=_("Change password"), type="password")
                     self.pwd_cnf_edit = gr.Textbox(
-                        label="Confirm change password",
+                        label=_("Confirm change password"),
                         type="password",
                     )
-                self.admin_edit = gr.Checkbox(label="Admin")
+                self.admin_edit = gr.Checkbox(label=_("Admin"))
 
             with gr.Row(visible=False) as self._selected_panel_btn:
                 with gr.Column():
-                    self.btn_edit_save = gr.Button("Save")
+                    self.btn_edit_save = gr.Button(_("Save"))
                 with gr.Column():
-                    self.btn_delete = gr.Button("Delete")
+                    self.btn_delete = gr.Button(_("Delete"))
                     with gr.Row():
                         self.btn_delete_yes = gr.Button(
-                            "Confirm delete", variant="primary", visible=False
+                            _("Confirm delete"), variant="primary", visible=False
                         )
-                        self.btn_delete_no = gr.Button("Cancel", visible=False)
+                        self.btn_delete_no = gr.Button(_("Cancel"), visible=False)
                 with gr.Column():
-                    self.btn_close = gr.Button("Close")
+                    self.btn_close = gr.Button(_("Close"))
 
-        with gr.Tab(label="Create user"):
-            self.usn_new = gr.Textbox(label="Username", interactive=True)
+        with gr.Tab(label=_("Create user")):
+            self.usn_new = gr.Textbox(label=_("Username"), interactive=True)
             self.pwd_new = gr.Textbox(
-                label="Password", type="password", interactive=True
+                label=_("Password"), type="password", interactive=True
             )
             self.pwd_cnf_new = gr.Textbox(
-                label="Confirm password", type="password", interactive=True
+                label=_("Confirm password"), type="password", interactive=True
             )
             with gr.Row():
                 gr.Markdown(USERNAME_RULE)
                 gr.Markdown(PASSWORD_RULE)
-            self.btn_new = gr.Button("Create user")
+            self.btn_new = gr.Button(_("Create user"))
 
     def on_register_events(self):
         self.btn_new.click(
@@ -284,20 +287,20 @@ class UserManagement(BasePage):
     def create_user(self, usn, pwd, pwd_cnf):
         errors = validate_username(usn)
         if errors:
-            gr.Warning(errors)
+            gr.Warning(_(errors))
             return usn, pwd, pwd_cnf
 
         errors = validate_password(pwd, pwd_cnf)
         print(errors)
         if errors:
-            gr.Warning(errors)
+            gr.Warning(_(errors))
             return usn, pwd, pwd_cnf
 
         with Session(engine) as session:
             statement = select(User).where(User.username_lower == usn.lower())
             result = session.exec(statement).all()
             if result:
-                gr.Warning(f'Username "{usn}" already exists')
+                gr.Warning(_('Username "{}" already exists').format(usn))
                 return
 
             hashed_password = hashlib.sha256(pwd.encode()).hexdigest()
@@ -306,7 +309,7 @@ class UserManagement(BasePage):
             )
             session.add(user)
             session.commit()
-            gr.Info(f'User "{usn}" created successfully')
+            gr.Info(_('User "{}" created successfully').format(usn))
 
         return "", "", ""
 
@@ -340,7 +343,7 @@ class UserManagement(BasePage):
 
     def select_user(self, user_list, ev: gr.SelectData):
         if ev.value == "-" and ev.index[0] == 0:
-            gr.Info("No user is loaded. Please refresh the user list")
+            gr.Info(_("No user is loaded. Please refresh the user list"))
             return -1
 
         if not ev.selected:
@@ -389,7 +392,7 @@ class UserManagement(BasePage):
 
     def on_btn_delete_click(self, selected_user_id):
         if selected_user_id is None:
-            gr.Warning("No user is selected")
+            gr.Warning(_("No user is selected"))
             btn_delete = gr.update(visible=True)
             btn_delete_yes = gr.update(visible=False)
             btn_delete_no = gr.update(visible=False)
@@ -422,13 +425,12 @@ class UserManagement(BasePage):
             if pwd:
                 user.password = hashlib.sha256(pwd.encode()).hexdigest()
             session.commit()
-            gr.Info(f'User "{usn}" updated successfully')
-
+            gr.Info(_('User "{}" updated successfully').format(usn))
         return "", ""
 
     def delete_user(self, current_user, selected_user_id):
         if current_user == selected_user_id:
-            gr.Warning("You cannot delete yourself")
+            gr.Warning(_("You cannot delete yourself"))
             return selected_user_id
 
         with Session(engine) as session:
@@ -436,5 +438,6 @@ class UserManagement(BasePage):
             user = session.exec(statement).one()
             session.delete(user)
             session.commit()
-            gr.Info(f'User "{user.username}" deleted successfully')
+            gr.Info(_('User "{}" deleted successfully').format(user.username))
+            # gr.Info(f'User "{user.username}" deleted successfully')
         return -1

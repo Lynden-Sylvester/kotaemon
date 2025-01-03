@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
+import gettext
 import gradio as gr
 import pandas as pd
 from theflow.storage import storage
@@ -13,7 +14,9 @@ from kotaemon.contribs.promptui.export import export
 
 from ..logs import ResultLog
 
-USAGE_INSTRUCTION = """## How to use:
+_ = gettext.gettext
+
+USAGE_INSTRUCTION = _("""## How to use:
 
 1. Set the desired parameters.
 2. Set the desired inputs.
@@ -35,7 +38,7 @@ In case of errors, you can:
 ## Contribute:
 
 - Follow installation at: https://github.com/Cinnamon/kotaemon/
-"""
+""")
 
 
 def construct_pipeline_ui(
@@ -83,13 +86,13 @@ def construct_pipeline_ui(
 
     temp = gr.Tab
     with gr.Blocks(analytics_enabled=False, title="Welcome to PromptUI") as demo:
-        with gr.Accordion(label="HOW TO", open=False):
+        with gr.Accordion(label=_("HOW TO"), open=False):
             gr.Markdown(USAGE_INSTRUCTION)
-        with gr.Accordion(label="Params History", open=False):
+        with gr.Accordion(label=_("Params History"), open=False):
             with gr.Row():
-                save_btn = gr.Button("Save params")
+                save_btn = gr.Button(_("Save params"))
                 save_btn.click(func_save, inputs=params, outputs=history_dataframe)
-                load_params_btn = gr.Button("Reload params")
+                load_params_btn = gr.Button(_("Reload params"))
                 load_params_btn.click(
                     func_load_params, inputs=[], outputs=history_dataframe
                 )
@@ -98,11 +101,11 @@ def construct_pipeline_ui(
                 func_activate_params, inputs=params, outputs=params
             )
         with gr.Row():
-            run_btn = gr.Button("Run")
+            run_btn = gr.Button(_("Run"))
             run_btn.click(func_run, inputs=inputs + params, outputs=outputs)
-            export_btn = gr.Button(
+            export_btn = gr.Button(_(
                 "Export (Result will be in Exported file next to Output)"
-            )
+            ))
             export_btn.click(func_export, inputs=[], outputs=exported_file)
         with gr.Row():
             with gr.Column():
@@ -115,7 +118,7 @@ def construct_pipeline_ui(
                         for component in inputs:
                             component.render()
                 if not params and not inputs:
-                    gr.Text("No params or inputs")
+                    gr.Text(_("No params or inputs"))
             with gr.Column():
                 with temp("Outputs"):
                     for component in outputs:
@@ -197,7 +200,7 @@ def build_pipeline_ui(config: dict, pipeline_def):
         filename = save_dir / f"{int(time.time())}.pkl"
         with open(filename, "wb") as f:
             pickle.dump(params, f)
-        gr.Info("Params saved")
+        gr.Info(_("Params saved"))
 
         data = load_saved_params(str(save_dir))
         return pd.DataFrame(data)
@@ -210,18 +213,18 @@ def build_pipeline_ui(config: dict, pipeline_def):
         data = load_saved_params(str(save_dir))
         output_args = [each for each in args]
         if ev.value is None:
-            gr.Info(f'Blank value: "{ev.value}". Skip')
+            gr.Info(_('Blank value: "{}". Skip').format(ev.value))
             return output_args
 
         column = list(data.keys())[ev.index[1]]
 
         if column not in params_name:
-            gr.Info(f'Column "{column}" not in params. Skip')
+            gr.Info(_('Column "{}" not in params. Skip').format(column))
             return output_args
 
         value = data[column][ev.index[0]]
         if value is None:
-            gr.Info(f'Blank value: "{ev.value}". Skip')
+            gr.Info(_('Blank value: "{}". Skip').format(ev.value))
             return output_args
 
         output_args[params_name.index(column)] = value
@@ -233,12 +236,12 @@ def build_pipeline_ui(config: dict, pipeline_def):
             f"{pipeline_def.__module__}.{pipeline_def.__name__}_{datetime.now()}.xlsx"
         )
         path = str(exported_dir / name)
-        gr.Info(f"Begin exporting {name}...")
+        gr.Info(_("Begin exporting {}...").format(name))
         try:
             export(config=config, pipeline_def=pipeline_def, output_path=path)
         except Exception as e:
-            raise gr.Error(f"Failed to export. Please contact project's AIR: {e}")
-        gr.Info(f"Exported {name}. Please go to the `Exported file` tab to download")
+            raise gr.Error(_("Failed to export. Please contact project's AIR: {}").format(e))
+        gr.Info(_("Exported {}. Please go to the `Exported file` tab to download").format(name))
         return path
 
     return construct_pipeline_ui(

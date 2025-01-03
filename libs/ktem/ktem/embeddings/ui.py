@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+import gettext
 import gradio as gr
 import pandas as pd
 import yaml
@@ -9,6 +10,7 @@ from theflow.utils.modules import deserialize
 
 from .manager import embedding_models_manager
 
+_ = gettext.gettext
 
 def format_description(cls):
     params = cls.describe()["params"]
@@ -24,12 +26,12 @@ class EmbeddingManagement(BasePage):
     def __init__(self, app):
         self._app = app
         self.spec_desc_default = (
-            "# Spec description\n\nSelect a model to view the spec description."
+            _("# Spec description\n\nSelect a model to view the spec description.")
         )
         self.on_building_ui()
 
     def on_building_ui(self):
-        with gr.Tab(label="View"):
+        with gr.Tab(label=_("View")):
             self.emb_list = gr.DataFrame(
                 headers=["name", "vendor", "default"],
                 interactive=False,
@@ -40,86 +42,86 @@ class EmbeddingManagement(BasePage):
                 with gr.Row():
                     with gr.Column():
                         self.edit_default = gr.Checkbox(
-                            label="Set default",
-                            info=(
+                            label=_("Set default"),
+                            info=(_(
                                 "Set this Embedding model as default. This default "
                                 "Embedding will be used by other components by default "
                                 "if no Embedding is specified for such components."
-                            ),
+                            )),
                         )
                         self.edit_spec = gr.Textbox(
-                            label="Specification",
-                            info="Specification of the Embedding model in YAML format",
+                            label=_("Specification"),
+                            info=_("Specification of the Embedding model in YAML format"),
                             lines=10,
                         )
 
                         with gr.Accordion(
-                            label="Test connection", visible=False, open=False
+                            label=_("Test connection"), visible=False, open=False
                         ) as self._check_connection_panel:
                             with gr.Row():
                                 with gr.Column(scale=4):
                                     self.connection_logs = gr.HTML(
-                                        "Logs",
+                                        _("Logs"),
                                     )
 
                                 with gr.Column(scale=1):
-                                    self.btn_test_connection = gr.Button("Test")
+                                    self.btn_test_connection = gr.Button(_("Test"))
 
                         with gr.Row(visible=False) as self._selected_panel_btn:
                             with gr.Column():
                                 self.btn_edit_save = gr.Button(
-                                    "Save", min_width=10, variant="primary"
+                                    _("Save"), min_width=10, variant="primary"
                                 )
                             with gr.Column():
                                 self.btn_delete = gr.Button(
-                                    "Delete", min_width=10, variant="stop"
+                                    _("Delete"), min_width=10, variant="stop"
                                 )
                                 with gr.Row():
                                     self.btn_delete_yes = gr.Button(
-                                        "Confirm Delete",
+                                        _("Confirm Delete"),
                                         variant="stop",
                                         visible=False,
                                         min_width=10,
                                     )
                                     self.btn_delete_no = gr.Button(
-                                        "Cancel", visible=False, min_width=10
+                                        _("Cancel"), visible=False, min_width=10
                                     )
                             with gr.Column():
-                                self.btn_close = gr.Button("Close", min_width=10)
+                                self.btn_close = gr.Button(_("Close"), min_width=10)
 
                     with gr.Column():
-                        self.edit_spec_desc = gr.Markdown("# Spec description")
+                        self.edit_spec_desc = gr.Markdown(_("# Spec description"))
 
-        with gr.Tab(label="Add"):
+        with gr.Tab(label=_("Add")):
             with gr.Row():
                 with gr.Column(scale=2):
                     self.name = gr.Textbox(
-                        label="Name",
-                        info=(
+                        label=_("Name"),
+                        info=(_(
                             "Must be unique and non-empty. "
                             "The name will be used to identify the embedding model."
-                        ),
+                        )),
                     )
                     self.emb_choices = gr.Dropdown(
-                        label="Vendors",
-                        info=(
+                        label=_("Vendors"),
+                        info=(_(
                             "Choose the vendor of the Embedding model. Each vendor "
                             "has different specification."
-                        ),
+                        )),
                     )
                     self.spec = gr.Textbox(
-                        label="Specification",
-                        info="Specification of the Embedding model in YAML format.",
+                        label=_("Specification"),
+                        info=_("Specification of the Embedding model in YAML format."),
                     )
                     self.default = gr.Checkbox(
-                        label="Set default",
-                        info=(
+                        label=_("Set default"),
+                        info=(_(
                             "Set this Embedding model as default. This default "
                             "Embedding will be used by other components by default "
                             "if no Embedding is specified for such components."
-                        ),
+                        )),
                     )
-                    self.btn_new = gr.Button("Add", variant="primary")
+                    self.btn_new = gr.Button(_("Add"), variant="primary")
 
                 with gr.Column(scale=3):
                     self.spec_desc = gr.Markdown(self.spec_desc_default)
@@ -252,9 +254,9 @@ class EmbeddingManagement(BasePage):
             )
 
             embedding_models_manager.add(name, spec=spec, default=default)
-            gr.Info(f'Create Embedding model "{name}" successfully')
+            gr.Info(_('Create Embedding model "{}" successfully').format(name))
         except Exception as e:
-            raise gr.Error(f"Failed to create Embedding model {name}: {e}")
+            raise gr.Error(_("Failed to create Embedding model {}: {}").format(name, e))
 
     def list_embeddings(self):
         """List the Embedding models"""
@@ -277,7 +279,7 @@ class EmbeddingManagement(BasePage):
 
     def select_emb(self, emb_list, ev: gr.SelectData):
         if ev.value == "-" and ev.index[0] == 0:
-            gr.Info("No embedding model is loaded. Please add first")
+            gr.Info(_("No embedding model is loaded. Please add first"))
             return ""
 
         if not ev.selected:
@@ -381,13 +383,13 @@ class EmbeddingManagement(BasePage):
             )
             gr.Info(f'Save Embedding model "{selected_emb_name}" successfully')
         except Exception as e:
-            gr.Error(f'Failed to save Embedding model "{selected_emb_name}": {e}')
+            gr.Error(_('Failed to save Embedding model "{}": {}').format(selected_emb_name, e))
 
     def delete_emb(self, selected_emb_name):
         try:
             embedding_models_manager.delete(selected_emb_name)
         except Exception as e:
-            gr.Error(f'Failed to delete Embedding model "{selected_emb_name}": {e}')
+            gr.Error(_('Failed to delete Embedding model "{}": {}').format(selected_emb_name, e))
             return selected_emb_name
 
         return ""

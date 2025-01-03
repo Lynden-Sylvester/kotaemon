@@ -1,4 +1,5 @@
 import gradio as gr
+import gettext
 from decouple import config
 from ktem.app import BaseApp
 from ktem.pages.chat import ChatPage
@@ -7,6 +8,8 @@ from ktem.pages.resources import ResourcesTab
 from ktem.pages.settings import SettingsPage
 from ktem.pages.setup import SetupPage
 from theflow.settings import settings as flowsettings
+
+_ = gettext.gettext
 
 KH_DEMO_MODE = getattr(flowsettings, "KH_DEMO_MODE", False)
 KH_ENABLE_FIRST_SETUP = getattr(flowsettings, "KH_ENABLE_FIRST_SETUP", False)
@@ -47,12 +50,12 @@ class App(BaseApp):
                 from ktem.pages.login import LoginPage
 
                 with gr.Tab(
-                    "Welcome", elem_id="login-tab", id="login-tab"
+                    _("Welcome"), elem_id="login-tab", id="login-tab"
                 ) as self._tabs["login-tab"]:
                     self.login_page = LoginPage(self)
 
             with gr.Tab(
-                "Chat",
+                _("Chat"),
                 elem_id="chat-tab",
                 id="chat-tab",
                 visible=not self.f_user_management,
@@ -76,7 +79,7 @@ class App(BaseApp):
                         setattr(self, f"_index_{index.id}", page)
             elif len(self.index_manager.indices) > 1:
                 with gr.Tab(
-                    "Files",
+                    _("Files"),
                     elem_id="indices-tab",
                     elem_classes=["fill-main-area-height", "scrollable", "indices-tab"],
                     id="indices-tab",
@@ -91,7 +94,7 @@ class App(BaseApp):
                             setattr(self, f"_index_{index.id}", page)
 
             with gr.Tab(
-                "Resources",
+                _("Resources"),
                 elem_id="resources-tab",
                 id="resources-tab",
                 visible=not self.f_user_management,
@@ -100,7 +103,7 @@ class App(BaseApp):
                 self.resources_page = ResourcesTab(self)
 
             with gr.Tab(
-                "Settings",
+                _("Settings"),
                 elem_id="settings-tab",
                 id="settings-tab",
                 visible=not self.f_user_management,
@@ -109,7 +112,7 @@ class App(BaseApp):
                 self.settings_page = SettingsPage(self)
 
             with gr.Tab(
-                "Help",
+                _("Help"),
                 elem_id="help-tab",
                 id="help-tab",
                 visible=not self.f_user_management,

@@ -2,6 +2,7 @@ import logging
 import os
 from copy import deepcopy
 
+import gettext
 import gradio as gr
 from ktem.app import BasePage
 from ktem.db.models import Conversation, User, engine
@@ -18,6 +19,7 @@ ASSETS_DIR = "assets/icons"
 if not os.path.isdir(ASSETS_DIR):
     ASSETS_DIR = "libs/ktem/ktem/assets/icons"
 
+_ = gettext.gettext
 
 def is_conv_name_valid(name):
     """Check if the conversation name is valid"""
@@ -39,7 +41,7 @@ class ConversationControl(BasePage):
 
     def on_building_ui(self):
         with gr.Row():
-            gr.Markdown("## Conversations")
+            gr.Markdown(_("## Conversations"))
             self.btn_toggle_dark_mode = gr.Button(
                 value="",
                 icon=f"{ASSETS_DIR}/dark_mode.svg",
@@ -77,7 +79,7 @@ class ConversationControl(BasePage):
 
         self.conversation_id = gr.State(value="")
         self.conversation = gr.Dropdown(
-            label="Chat sessions",
+            label=_("Chat sessions"),
             choices=[],
             container=False,
             filterable=True,
@@ -88,7 +90,7 @@ class ConversationControl(BasePage):
         with gr.Row() as self._new_delete:
             self.cb_is_public = gr.Checkbox(
                 value=False,
-                label="Shared",
+                label=_("Shared"),
                 min_width=10,
                 scale=4,
                 elem_id="is-public-checkbox",
@@ -122,16 +124,16 @@ class ConversationControl(BasePage):
 
         with gr.Row(visible=False) as self._delete_confirm:
             self.btn_del_conf = gr.Button(
-                value="Delete",
+                value=_("Delete"),
                 variant="stop",
                 min_width=10,
             )
-            self.btn_del_cnl = gr.Button(value="Cancel", min_width=10)
+            self.btn_del_cnl = gr.Button(value=_("Cancel"), min_width=10)
 
         with gr.Row():
             self.conversation_rn = gr.Text(
-                label="(Enter) to save",
-                placeholder="Conversation name",
+                label=_("(Enter) to save"),
+                placeholder=_("Conversation name"),
                 container=True,
                 scale=5,
                 min_width=10,
@@ -202,7 +204,7 @@ class ConversationControl(BasePage):
     def new_conv(self, user_id):
         """Create new chat"""
         if user_id is None:
-            gr.Warning("Please sign in first (Settings → User Settings)")
+            gr.Warning(_("Please sign in first (Settings → User Settings)"))
             return None, gr.update()
         with Session(engine) as session:
             new_conv = Conversation(user=user_id)
@@ -218,11 +220,11 @@ class ConversationControl(BasePage):
     def delete_conv(self, conversation_id, user_id):
         """Delete the selected conversation"""
         if not conversation_id:
-            gr.Warning("No conversation selected.")
+            gr.Warning(_("No conversation selected."))
             return None, gr.update()
 
         if user_id is None:
-            gr.Warning("Please sign in first (Settings → User Settings)")
+            gr.Warning(_("Please sign in first (Settings → User Settings)"))
             return None, gr.update()
 
         with Session(engine) as session:
@@ -271,7 +273,7 @@ class ConversationControl(BasePage):
                 info_panel = (
                     retrieval_history[-1]
                     if retrieval_history
-                    else "<h5><b>No evidence found.</b></h5>"
+                    else _("<h5><b>No evidence found.</b></h5>")
                 )
                 plot_data = plot_history[-1] if plot_history else None
                 state = result.data_source.get("state", STATE)
@@ -325,11 +327,11 @@ class ConversationControl(BasePage):
             )
 
         if user_id is None:
-            gr.Warning("Please sign in first (Settings → User Settings)")
+            gr.Warning(_("Please sign in first (Settings → User Settings)"))
             return gr.update(), ""
 
         if not conversation_id:
-            gr.Warning("No conversation selected.")
+            gr.Warning(_("No conversation selected."))
             return gr.update(), ""
 
         errors = is_conv_name_valid(new_name)
@@ -345,7 +347,7 @@ class ConversationControl(BasePage):
             session.commit()
 
         history = self.load_chat_history(user_id)
-        gr.Info("Conversation renamed.")
+        gr.Info(_("Conversation renamed."))
         return (
             gr.update(choices=history),
             conversation_id,
@@ -360,11 +362,11 @@ class ConversationControl(BasePage):
             return
 
         if user_id is None:
-            gr.Warning("Please sign in first (Settings → User Settings)")
+            gr.Warning(_("Please sign in first (Settings → User Settings)"))
             return gr.update(), ""
 
         if not conversation_id:
-            gr.Warning("No conversation selected.")
+            gr.Warning(_("No conversation selected."))
             return gr.update(), ""
 
         with Session(engine) as session:
@@ -380,7 +382,7 @@ class ConversationControl(BasePage):
             session.add(result)
             session.commit()
 
-        gr.Info("Chat suggestions updated.")
+        gr.Info(_("Chat suggestions updated."))
 
     def _on_app_created(self):
         """Reload the conversation once the app is created"""

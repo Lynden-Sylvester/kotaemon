@@ -2,6 +2,7 @@ import json
 
 import gradio as gr
 import requests
+import gettext
 from ktem.app import BasePage
 from ktem.embeddings.manager import embedding_models_manager as embeddings
 from ktem.llms.manager import llms
@@ -45,6 +46,7 @@ def pull_model(name: str, stream: bool = True):
 
     return data
 
+_ = gettext.gettext
 
 class SetupPage(BasePage):
 
@@ -55,66 +57,67 @@ class SetupPage(BasePage):
         self.on_building_ui()
 
     def on_building_ui(self):
-        gr.Markdown(f"# Welcome to {self._app.app_name} first setup!")
+        gr.Markdown(_("# Welcome to {} first setup!").format(self._app.app_name))
+        # gr.Markdown(f"# Welcome to {self._app.app_name} first setup!")
         self.radio_model = gr.Radio(
             [
-                ("Cohere API (*free registration*) - recommended", "cohere"),
-                ("Google API (*free registration*)", "google"),
-                ("OpenAI API (for GPT-based models)", "openai"),
-                ("Local LLM (for completely *private RAG*)", "ollama"),
+                (_("Cohere API (*free registration*) - recommended"), _("cohere")),
+                (_("Google API (*free registration*)"), _("google")),
+                (_("OpenAI API (for GPT-based models)"), _("openai")),
+                (_("Local LLM (for completely *private RAG*)"), _("ollama")),
             ],
-            label="Select your model provider",
-            value="cohere",
-            info=(
+            label=_("Select your model provider"),
+            value=_("cohere"),
+            info=(_(
                 "Note: You can change this later. "
                 "If you are not sure, go with the first option "
                 "which fits most normal users."
-            ),
+            )),
             interactive=True,
         )
 
         with gr.Column(visible=False) as self.openai_option:
             gr.Markdown(
-                (
+                (_(
                     "#### OpenAI API Key\n\n"
                     "(create at https://platform.openai.com/api-keys)"
-                )
+                ))
             )
             self.openai_api_key = gr.Textbox(
-                show_label=False, placeholder="OpenAI API Key"
+                show_label=False, placeholder=_("OpenAI API Key")
             )
 
         with gr.Column(visible=True) as self.cohere_option:
             gr.Markdown(
-                (
+                (_(
                     "#### Cohere API Key\n\n"
                     "(register your free API key "
                     "at https://dashboard.cohere.com/api-keys)"
-                )
+                ))
             )
             self.cohere_api_key = gr.Textbox(
-                show_label=False, placeholder="Cohere API Key"
+                show_label=False, placeholder=_("Cohere API Key")
             )
 
         with gr.Column(visible=False) as self.google_option:
             gr.Markdown(
-                (
+                (_(
                     "#### Google API Key\n\n"
                     "(register your free API key "
                     "at https://aistudio.google.com/app/apikey)"
-                )
+                ))
             )
             self.google_api_key = gr.Textbox(
-                show_label=False, placeholder="Google API Key"
+                show_label=False, placeholder=_("Google API Key")
             )
 
         with gr.Column(visible=False) as self.ollama_option:
             gr.Markdown(
-                (
+                (_(
                     "#### Setup Ollama\n\n"
                     "Download and install Ollama from "
                     "https://ollama.com/"
-                )
+                ))
             )
 
         self.setup_log = gr.HTML(
@@ -122,9 +125,9 @@ class SetupPage(BasePage):
         )
 
         with gr.Row():
-            self.btn_finish = gr.Button("Proceed", variant="primary")
+            self.btn_finish = gr.Button(_("Proceed"), variant="primary")
             self.btn_skip = gr.Button(
-                "I am an advance user. Skip this.", variant="stop"
+                _("I am an advance user. Skip this."), variant="stop"
             )
 
     def on_register_events(self):
@@ -189,7 +192,7 @@ class SetupPage(BasePage):
 
         log_content = ""
         if not radio_model_value:
-            gr.Info("Skip setup models.")
+            gr.Info(_("Skip setup models."))
             yield gr.value(visible=False)
             return
 
@@ -321,7 +324,7 @@ class SetupPage(BasePage):
                     f"Got error: {str(e)}"
                 )
                 yield log_content
-                raise gr.Error("Failed to download model from Ollama.")
+                raise gr.Error(_("Failed to download model from Ollama."))
 
         # test models connection
         llm_output = emb_output = None
@@ -376,11 +379,11 @@ class SetupPage(BasePage):
             yield log_content
 
         if llm_output and emb_output:
-            gr.Info("Setup models completed successfully!")
+            gr.Info(_("Setup models completed successfully!"))
         else:
-            raise gr.Error(
+            raise gr.Error(_(
                 "Setup models failed. Please verify your connection and API key."
-            )
+            ))
 
     def update_default_settings(self, radio_model_value, default_settings):
         # revise default settings

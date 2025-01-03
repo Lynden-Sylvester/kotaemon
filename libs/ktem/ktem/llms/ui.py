@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+import gettext
 import gradio as gr
 import pandas as pd
 import yaml
@@ -9,6 +10,7 @@ from theflow.utils.modules import deserialize
 
 from .manager import llms
 
+_ = gettext.gettext
 
 def format_description(cls):
     params = cls.describe()["params"]
@@ -24,12 +26,12 @@ class LLMManagement(BasePage):
     def __init__(self, app):
         self._app = app
         self.spec_desc_default = (
-            "# Spec description\n\nSelect an LLM to view the spec description."
+            _("# Spec description\n\nSelect an LLM to view the spec description.")
         )
         self.on_building_ui()
 
     def on_building_ui(self):
-        with gr.Tab(label="View"):
+        with gr.Tab(label=_("View")):
             self.llm_list = gr.DataFrame(
                 headers=["name", "vendor", "default"],
                 interactive=False,
@@ -40,83 +42,83 @@ class LLMManagement(BasePage):
                 with gr.Row():
                     with gr.Column():
                         self.edit_default = gr.Checkbox(
-                            label="Set default",
-                            info=(
+                            label=_("Set default"),
+                            info=(_(
                                 "Set this LLM as default. If no default is set, a "
                                 "random LLM will be used."
-                            ),
+                            )),
                         )
                         self.edit_spec = gr.Textbox(
-                            label="Specification",
-                            info="Specification of the LLM in YAML format",
+                            label=_("Specification"),
+                            info=_("Specification of the LLM in YAML format"),
                             lines=10,
                         )
 
                         with gr.Accordion(
-                            label="Test connection", visible=False, open=False
+                            label=_("Test connection"), visible=False, open=False
                         ) as self._check_connection_panel:
                             with gr.Row():
                                 with gr.Column(scale=4):
-                                    self.connection_logs = gr.HTML("Logs")
+                                    self.connection_logs = gr.HTML(_("Logs"))
 
                                 with gr.Column(scale=1):
                                     self.btn_test_connection = gr.Button(
-                                        "Test",
+                                        _("Test"),
                                     )
 
                         with gr.Row(visible=False) as self._selected_panel_btn:
                             with gr.Column():
                                 self.btn_edit_save = gr.Button(
-                                    "Save", min_width=10, variant="primary"
+                                    _("Save"), min_width=10, variant="primary"
                                 )
                             with gr.Column():
                                 self.btn_delete = gr.Button(
-                                    "Delete", min_width=10, variant="stop"
+                                    _("Delete"), min_width=10, variant="stop"
                                 )
                                 with gr.Row():
                                     self.btn_delete_yes = gr.Button(
-                                        "Confirm Delete",
+                                        _("Confirm Delete"),
                                         variant="stop",
                                         visible=False,
                                         min_width=10,
                                     )
                                     self.btn_delete_no = gr.Button(
-                                        "Cancel", visible=False, min_width=10
+                                        _("Cancel"), visible=False, min_width=10
                                     )
                             with gr.Column():
-                                self.btn_close = gr.Button("Close", min_width=10)
+                                self.btn_close = gr.Button(_("Close"), min_width=10)
 
                     with gr.Column():
-                        self.edit_spec_desc = gr.Markdown("# Spec description")
+                        self.edit_spec_desc = gr.Markdown(_("# Spec description"))
 
-        with gr.Tab(label="Add"):
+        with gr.Tab(label=_("Add")):
             with gr.Row():
                 with gr.Column(scale=2):
                     self.name = gr.Textbox(
-                        label="LLM name",
-                        info=(
+                        label=_("LLM name"),
+                        info=(_(
                             "Must be unique. The name will be used to identify the LLM."
-                        ),
+                        )),
                     )
                     self.llm_choices = gr.Dropdown(
-                        label="LLM vendors",
-                        info=(
+                        label=_("LLM vendors"),
+                        info=(_(
                             "Choose the vendor for the LLM. Each vendor has different "
                             "specification."
-                        ),
+                        )),
                     )
                     self.spec = gr.Textbox(
-                        label="Specification",
-                        info="Specification of the LLM in YAML format",
+                        label=_("Specification"),
+                        info=_("Specification of the LLM in YAML format"),
                     )
                     self.default = gr.Checkbox(
-                        label="Set default",
-                        info=(
+                        label=_("Set default"),
+                        info=(_(
                             "Set this LLM as default. This default LLM will be used "
                             "by default across the application."
-                        ),
+                        )),
                     )
-                    self.btn_new = gr.Button("Add LLM", variant="primary")
+                    self.btn_new = gr.Button(_("Add LLM"), variant="primary")
 
                 with gr.Column(scale=3):
                     self.spec_desc = gr.Markdown(self.spec_desc_default)
@@ -250,9 +252,9 @@ class LLMManagement(BasePage):
             )
 
             llms.add(name, spec=spec, default=default)
-            gr.Info(f"LLM {name} created successfully")
+            gr.Info(_("LLM {} created successfully").format(name))
         except Exception as e:
-            raise gr.Error(f"Failed to create LLM {name}: {e}")
+            raise gr.Error(_("Failed to create LLM {}: {}").format(name, e))
 
     def list_llms(self):
         """List the LLMs"""
@@ -275,7 +277,7 @@ class LLMManagement(BasePage):
 
     def select_llm(self, llm_list, ev: gr.SelectData):
         if ev.value == "-" and ev.index[0] == 0:
-            gr.Info("No LLM is loaded. Please add LLM first")
+            gr.Info(_("No LLM is loaded. Please add LLM first"))
             return ""
 
         if not ev.selected:
@@ -358,7 +360,7 @@ class LLMManagement(BasePage):
             )
             yield log_content
 
-            gr.Info(f"LLM {selected_llm_name} connect successfully")
+            gr.Info(_("LLM {} connect successfully").format(selected_llm_name))
         except Exception as e:
             log_content += (
                 f"<mark style='color: yellow; background: red'>- Connection failed. "
@@ -373,15 +375,15 @@ class LLMManagement(BasePage):
             spec = yaml.load(spec, Loader=YAMLNoDateSafeLoader)
             spec["__type__"] = llms.info()[selected_llm_name]["spec"]["__type__"]
             llms.update(selected_llm_name, spec=spec, default=default)
-            gr.Info(f"LLM {selected_llm_name} saved successfully")
+            gr.Info(_("LLM {} saved successfully").format(selected_llm_name))
         except Exception as e:
-            raise gr.Error(f"Failed to save LLM {selected_llm_name}: {e}")
+            raise gr.Error(_("Failed to save LLM {}: {}").format(selected_llm_name, e))
 
     def delete_llm(self, selected_llm_name):
         try:
             llms.delete(selected_llm_name)
         except Exception as e:
-            gr.Error(f"Failed to delete LLM {selected_llm_name}: {e}")
+            gr.Error(_("Failed to delete LLM {}: {}").format(selected_llm_name, e))
             return selected_llm_name
 
         return ""
