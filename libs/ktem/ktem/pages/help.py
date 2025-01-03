@@ -1,10 +1,12 @@
 from importlib.metadata import version
 from pathlib import Path
 
+import gettext
 import gradio as gr
 import requests
 from theflow.settings import settings
 
+_ = gettext.gettext
 
 def get_remote_doc(url: str) -> str:
     try:
@@ -54,9 +56,10 @@ class HelpPage:
                 f"{self.remote_content_url}/v{self.app_version}/docs/about.md"
             )
         if about_md:
-            with gr.Accordion("About"):
+            with gr.Accordion(_("About")):
                 if self.app_version:
-                    about_md = f"Version: {self.app_version}\n\n{about_md}"
+                    about_md = _("Version: {}\n\n{}").format(self.app_version, about_md)
+                    #about_md = f"Version: {self.app_version}\n\n{about_md}"
                 gr.Markdown(about_md)
 
         user_guide_md_dir = self.doc_dir / "usage.md"
@@ -68,7 +71,7 @@ class HelpPage:
                 f"{self.remote_content_url}/v{self.app_version}/docs/usage.md"
             )
         if user_guide_md:
-            with gr.Accordion("User Guide"):
+            with gr.Accordion(_("User Guide")):
                 gr.Markdown(user_guide_md)
 
         if self.app_version:
@@ -95,5 +98,6 @@ class HelpPage:
                     fi.write(changelogs)
 
             if changelogs:
-                with gr.Accordion(f"Changelogs (v{self.app_version})"):
+                with gr.Accordion(_("Changelogs (v{})").format(self.app_version)):
+                # with gr.Accordion(f"Changelogs (v{self.app_version})"):
                     gr.Markdown(changelogs)

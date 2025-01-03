@@ -1,7 +1,10 @@
 import os
 from pathlib import Path
 from typing import Optional
+import locale # testing
+from .utils.lang import SUPPORTED_LANGUAGE_MAP
 
+import gettext
 import gradio as gr
 import pluggy
 from ktem import extension_protocol
@@ -14,7 +17,6 @@ from theflow.settings import settings
 from theflow.utils.modules import import_dotted_string
 
 BASE_PATH = os.environ.get("GRADIO_ROOT_PATH", "")
-
 
 class BaseApp:
     """The main app of Kotaemon
@@ -34,6 +36,16 @@ class BaseApp:
         - Subscribe public events
         - Register events
     """
+
+    gettext.bindtextdomain("messages", "locales")
+    gettext.textdomain("messages")
+
+    locales = locale.getlocale()[0]
+
+    lang = gettext.translation("messages", localedir="locales", fallback=True, languages=[locales])
+    lang.install()
+    _ = lang.gettext
+    
 
     public_events: list[str] = []
 

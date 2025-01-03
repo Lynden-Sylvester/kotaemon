@@ -4,6 +4,7 @@ import re
 from copy import deepcopy
 from typing import Optional
 
+import gettext
 import gradio as gr
 from ktem.app import BasePage
 from ktem.components import reasonings
@@ -27,6 +28,8 @@ from .chat_panel import ChatPanel
 from .common import STATE
 from .control import ConversationControl
 from .report import ReportIssue
+
+_ = gettext.gettext
 
 DEFAULT_SETTING = "(default)"
 INFO_PANEL_SCALES = {True: 8, False: 4}
@@ -692,7 +695,7 @@ class ChatPage(BasePage):
             chat_history = chat_history + [(chat_input_text, None)]
         else:
             if not chat_history:
-                raise gr.Error("Empty chat")
+                raise gr.Error(_("Empty chat"))
 
         if not conv_id:
             id_, update = self.chat_control.new_conv(user_id)
@@ -723,7 +726,7 @@ class ChatPage(BasePage):
 
     def on_set_public_conversation(self, is_public, convo_id):
         if not convo_id:
-            gr.Warning("No conversation selected")
+            gr.Warning(_("No conversation selected"))
             return
 
         with Session(engine) as session:
@@ -740,7 +743,8 @@ class ChatPage(BasePage):
                 session.commit()
 
                 gr.Info(
-                    f"Conversation: {name} is {'public' if is_public else 'private'}."
+                    _("Conversation: {} is {}.")
+                    .format(name, ("public" if is_public else "private"))
                 )
 
     def on_subscribe_public_events(self):
@@ -789,7 +793,7 @@ class ChatPage(BasePage):
     ):
         """Update the data source"""
         if not convo_id:
-            gr.Warning("No conversation selected")
+            gr.Warning(_("No conversation selected"))
             return
 
         # if not regen, then append the new message
@@ -839,7 +843,7 @@ class ChatPage(BasePage):
     def reasoning_changed(self, reasoning_type):
         if reasoning_type != DEFAULT_SETTING:
             # override app settings state (temporary)
-            gr.Info("Reasoning type changed to `{}`".format(reasoning_type))
+            gr.Info(_("Reasoning type changed to `{reasoning_type}`"))
         return reasoning_type
 
     def is_liked(self, convo_id, liked: gr.LikeData):

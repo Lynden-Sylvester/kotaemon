@@ -1,7 +1,9 @@
+import gettext
 import gradio as gr
 from ktem.app import BasePage
 from theflow.settings import settings as flowsettings
 
+_ = gettext.gettext
 
 class ChatSuggestion(BasePage):
     def __init__(self, app):
@@ -20,7 +22,7 @@ class ChatSuggestion(BasePage):
         )
         self.chat_samples = [[each] for each in chat_samples]
         with gr.Accordion(
-            label="Chat Suggestion",
+            label=_("Chat Suggestion"),
             visible=getattr(flowsettings, "KH_FEATURE_CHAT_SUGGESTION", False),
         ) as self.accordion:
             self.examples = gr.DataFrame(

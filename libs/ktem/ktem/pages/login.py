@@ -1,5 +1,6 @@
 import hashlib
 
+import gettext
 import gradio as gr
 from ktem.app import BasePage
 from ktem.db.models import User, engine
@@ -21,6 +22,7 @@ function(usn, pwd) {
 }
 """
 
+_ = gettext.gettext
 
 class LoginPage(BasePage):
 
@@ -31,10 +33,11 @@ class LoginPage(BasePage):
         self.on_building_ui()
 
     def on_building_ui(self):
-        gr.Markdown(f"# Welcome to {self._app.app_name}!")
-        self.usn = gr.Textbox(label="Username", visible=False)
-        self.pwd = gr.Textbox(label="Password", type="password", visible=False)
-        self.btn_login = gr.Button("Login", visible=False)
+        gr.Markdown(_("# Welcome to {}!").format(self._app.app_name))
+        #gr.Markdown(_(f"# Welcome to {self._app.app_name}!"))
+        self.usn = gr.Textbox(label=_("Username"), visible=False)
+        self.pwd = gr.Textbox(label=_("Password"), type="password", visible=False)
+        self.btn_login = gr.Button(_("Login"), visible=False)
 
     def on_register_events(self):
         onSignIn = gr.on(
@@ -99,5 +102,5 @@ class LoginPage(BasePage):
             if result:
                 return result[0].id, "", ""
 
-            gr.Warning("Invalid username or password")
+            gr.Warning(_("Invalid username or password"))
             return None, usn, pwd

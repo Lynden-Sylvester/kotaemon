@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+import gettext
 import gradio as gr
 import pandas as pd
 import yaml
@@ -11,6 +12,7 @@ from kotaemon.base import Document
 
 from .manager import reranking_models_manager
 
+_ = gettext.gettext
 
 def format_description(cls):
     params = cls.describe()["params"]
@@ -31,7 +33,7 @@ class RerankingManagement(BasePage):
         self.on_building_ui()
 
     def on_building_ui(self):
-        with gr.Tab(label="View"):
+        with gr.Tab(label=_("View")):
             self.rerank_list = gr.DataFrame(
                 headers=["name", "vendor", "default"],
                 interactive=False,
@@ -42,86 +44,86 @@ class RerankingManagement(BasePage):
                 with gr.Row():
                     with gr.Column():
                         self.edit_default = gr.Checkbox(
-                            label="Set default",
-                            info=(
+                            label=_("Set default"),
+                            info=_(
                                 "Set this Reranking model as default. This default "
                                 "Reranking will be used by other components by default "
                                 "if no Reranking is specified for such components."
                             ),
                         )
                         self.edit_spec = gr.Textbox(
-                            label="Specification",
-                            info="Specification of the Embedding model in YAML format",
+                            label=_("Specification"),
+                            info=_("Specification of the Embedding model in YAML format"),
                             lines=10,
                         )
 
                         with gr.Accordion(
-                            label="Test connection", visible=False, open=False
+                            label=_("Test connection"), visible=False, open=False
                         ) as self._check_connection_panel:
                             with gr.Row():
                                 with gr.Column(scale=4):
                                     self.connection_logs = gr.HTML(
-                                        "Logs",
+                                        _("Logs"),
                                     )
 
                                 with gr.Column(scale=1):
-                                    self.btn_test_connection = gr.Button("Test")
+                                    self.btn_test_connection = gr.Button(_("Test"))
 
                         with gr.Row(visible=False) as self._selected_panel_btn:
                             with gr.Column():
                                 self.btn_edit_save = gr.Button(
-                                    "Save", min_width=10, variant="primary"
+                                    _("Save"), min_width=10, variant="primary"
                                 )
                             with gr.Column():
                                 self.btn_delete = gr.Button(
-                                    "Delete", min_width=10, variant="stop"
+                                    _("Delete"), min_width=10, variant="stop"
                                 )
                                 with gr.Row():
                                     self.btn_delete_yes = gr.Button(
-                                        "Confirm Delete",
+                                        _("Confirm Delete"),
                                         variant="stop",
                                         visible=False,
                                         min_width=10,
                                     )
                                     self.btn_delete_no = gr.Button(
-                                        "Cancel", visible=False, min_width=10
+                                        _("Cancel"), visible=False, min_width=10
                                     )
                             with gr.Column():
-                                self.btn_close = gr.Button("Close", min_width=10)
+                                self.btn_close = gr.Button(_("Close"), min_width=10)
 
                     with gr.Column():
-                        self.edit_spec_desc = gr.Markdown("# Spec description")
+                        self.edit_spec_desc = gr.Markdown(_("# Spec description"))
 
-        with gr.Tab(label="Add"):
+        with gr.Tab(label=_("Add")):
             with gr.Row():
                 with gr.Column(scale=2):
                     self.name = gr.Textbox(
-                        label="Name",
-                        info=(
+                        label=_("Name"),
+                        info=_(
                             "Must be unique and non-empty. "
                             "The name will be used to identify the reranking model."
                         ),
                     )
                     self.rerank_choices = gr.Dropdown(
-                        label="Vendors",
-                        info=(
+                        label=_("Vendors"),
+                        info=_(
                             "Choose the vendor of the Reranking model. Each vendor "
                             "has different specification."
                         ),
                     )
                     self.spec = gr.Textbox(
-                        label="Specification",
-                        info="Specification of the Embedding model in YAML format.",
+                        label=_("Specification"),
+                        info=_("Specification of the Embedding model in YAML format."),
                     )
                     self.default = gr.Checkbox(
-                        label="Set default",
-                        info=(
+                        label=_("Set default"),
+                        info=_(
                             "Set this Reranking model as default. This default "
                             "Reranking will be used by other components by default "
                             "if no Reranking is specified for such components."
                         ),
                     )
-                    self.btn_new = gr.Button("Add", variant="primary")
+                    self.btn_new = gr.Button(_("Add"), variant="primary")
 
                 with gr.Column(scale=3):
                     self.spec_desc = gr.Markdown(self.spec_desc_default)
@@ -251,9 +253,11 @@ class RerankingManagement(BasePage):
             )
 
             reranking_models_manager.add(name, spec=spec, default=default)
-            gr.Info(f'Create Reranking model "{name}" successfully')
+            gr.Info(_('Create Reranking model "{}" successfully').format(name))
+            # gr.Info(f'Create Reranking model "{name}" successfully')
         except Exception as e:
-            raise gr.Error(f"Failed to create Reranking model {name}: {e}")
+            raise gr.Error(_("Failed to create Reranking model {}: {}").format(name, e))
+            # raise gr.Error(f"Failed to create Reranking model {name}: {e}")
 
     def list_rerankings(self):
         """List the Reranking models"""
@@ -276,7 +280,8 @@ class RerankingManagement(BasePage):
 
     def select_rerank(self, rerank_list, ev: gr.SelectData):
         if ev.value == "-" and ev.index[0] == 0:
-            gr.Info("No reranking model is loaded. Please add first")
+            gr.Info(_("No reranking model is loaded. Please add first"))
+            # gr.Info("No reranking model is loaded. Please add first")
             return ""
 
         if not ev.selected:
@@ -358,7 +363,8 @@ class RerankingManagement(BasePage):
             )
             yield log_content
 
-            gr.Info(f"Embedding {selected_rerank_name} connect successfully")
+            gr.Info(_("Embedding {} connected successfully").format(selected_rerank_name))
+            # gr.Info(f"Embedding {selected_rerank_name} connect successfully")
         except Exception as e:
             print(e)
             log_content += (
@@ -378,15 +384,18 @@ class RerankingManagement(BasePage):
             reranking_models_manager.update(
                 selected_rerank_name, spec=spec, default=default
             )
-            gr.Info(f'Save Reranking model "{selected_rerank_name}" successfully')
+            gr.Infor(_('Save Reranking model "{}" successfully').format(selected_rerank_name))
+            # gr.Info(f'Save Reranking model "{selected_rerank_name}" successfully')
         except Exception as e:
-            gr.Error(f'Failed to save Embedding model "{selected_rerank_name}": {e}')
+            gr.Error(_('Failed to save Embedding model "{}": {}').format(selected_rerank_name, e))
+            # gr.Error(f'Failed to save Embedding model "{selected_rerank_name}": {e}')
 
     def delete_rerank(self, selected_rerank_name):
         try:
             reranking_models_manager.delete(selected_rerank_name)
         except Exception as e:
-            gr.Error(f'Failed to delete Reranking model "{selected_rerank_name}": {e}')
+            gr.Error(_('Failed to delete Reranking model "{}": {}').format(selected_rerank_name, e))
+            #gr.Error(f'Failed to delete Reranking model "{selected_rerank_name}": {e}')
             return selected_rerank_name
 
         return ""
